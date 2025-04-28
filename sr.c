@@ -118,18 +118,27 @@ void A_input(struct pkt packet)
           printf("----A: ACK %d is not a duplicate\n", packet.acknum);
         new_ACKs++;
 
-        /* Mark the specific packet as ACKed */
+        /* Ensure ACKed packet is marked correctly and handle wraparound */
+        bool found = false;
         for (int i = 0; i < WINDOWSIZE; i++) {
           if (buffer[i].seqnum == packet.acknum && !acked[i]) {
             acked[i] = true;
+            found = true;
             break;
           }
         }
+        if (!found && TRACE > 0)
+          printf("----A: Warning: ACK %d not found in buffer\n", packet.acknum);
 
         /* Slide window for consecutive ACKed packets */
         while (windowcount > 0 && acked[windowfirst]) {
           windowcount--;
           windowfirst = (windowfirst + 1) % WINDOWSIZE;
+          /* Ensure timer is restarted if unacknowledged packets remain */
+          if (windowcount > 0 && !acked[windowfirst]) {
+            stoptimer(A);
+            starttimer(A, RTT);
+          }
         }
 
         /* Adjust timer: stop if no packets, restart if unacknowledged packets remain */
@@ -155,6 +164,9 @@ void A_timerinterrupt(void)
 
     tolayer3(A, buffer[windowfirst]);
     packets_resent++;
+
+    /* Ensure timer is restarted to avoid infinite retransmissions */
+    stoptimer(A);
     starttimer(A, RTT);
   }
 }
@@ -234,7 +246,9 @@ void B_input(struct pkt packet)
           printf("----B: sending ACK %d\n", sendpkt.acknum);
 
         /* Deliver in-order packets */
-        while (true) {
+        /* Add safety check to prevent infinite loop */
+        int max_deliveries = WINDOWSIZE; /* Prevent infinite loop */
+        while (max_deliveries > 0) {
           bool found = false;
           for (i = 0; i < WINDOWSIZE; i++) {
             if (received[i] && recv_buffer[i].seqnum == expectedseqnum) {
@@ -247,6 +261,7 @@ void B_input(struct pkt packet)
           }
           if (!found)
             break;
+          max_deliveries--;
         }
       }
     }
