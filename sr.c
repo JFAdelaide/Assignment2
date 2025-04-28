@@ -127,10 +127,8 @@ void A_input(struct pkt packet)
         }
 
         /* Slide window for consecutive ACKed packets */
-        int slide_count = 0;
         while (windowcount > 0 && acked[windowfirst]) {
           windowcount--;
-          slide_count++;
           windowfirst = (windowfirst + 1) % WINDOWSIZE;
         }
 
