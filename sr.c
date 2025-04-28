@@ -150,22 +150,16 @@ void A_input(struct pkt packet)
 /* called when A's timer goes off */
 void A_timerinterrupt(void)
 {
-  int i;
-
-  if (TRACE > 0)
-    printf("----A: time out,resend packets!\n");
-
-  for(i=0; i<windowcount; i++) {
-
+  /* Resend only the earliest unacknowledged packet */
+  if (windowcount > 0 && !acked[windowfirst]) {
     if (TRACE > 0)
-      printf ("---A: resending packet %d\n", (buffer[(windowfirst+i) % WINDOWSIZE]).seqnum);
+      printf("----A: timeout, resending packet %d\n", buffer[windowfirst].seqnum);
 
-    tolayer3(A,buffer[(windowfirst+i) % WINDOWSIZE]);
+    tolayer3(A, buffer[windowfirst]);
     packets_resent++;
-    if (i==0) starttimer(A,RTT);
+    starttimer(A, RTT);
   }
-}       
-
+}
 
 
 /* the following routine will be called once (only) before any other */
@@ -181,11 +175,10 @@ void A_init(void)
 		   */
   windowcount = 0;
 
-  // Initialize the acked array
+  /* Initialize ACK status for all buffer slots */
   for (int i = 0; i < WINDOWSIZE; i++)
     acked[i] = false;
 }
-
 
 
 /********* Receiver (B)  variables and procedures ************/
@@ -193,8 +186,11 @@ void A_init(void)
 static int expectedseqnum; /* the sequence number expected next by the receiver */
 static int B_nextseqnum;   /* the sequence number for the next packets sent by B */
 
+static struct pkt recv_buffer[WINDOWSIZE]; /* Buffer for out-of-order packets */
+static bool received[WINDOWSIZE]; /* Track received status */
 
-/* called from layer 3, when a packet arrives for layer 4 at B*/
+
+/* called from layer 3, when a packet arrives for layer 4 at B */
 void B_input(struct pkt packet)
 {
   struct pkt sendpkt;
