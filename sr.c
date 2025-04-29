@@ -219,7 +219,7 @@ void B_input(struct pkt packet)
                 (window_start > window_end && (packet.seqnum >= window_start || packet.seqnum <= window_end)));
 
     if (TRACE > 0)
-    printf("----B: packet %d is correctly received, send ACK!\n",packet.seqnum);
+      printf("----B: packet %d is correctly received, send ACK!\n",packet.seqnum);
 
     /* Check if packet is below the window (already delivered but needs ACK) */
     below_window = ((window_start <= packet.seqnum && packet.seqnum < window_start) ||
