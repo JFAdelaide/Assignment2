@@ -118,7 +118,7 @@ void A_input(struct pkt packet)
           /* mark packet as acknowledged */
           acked[buf_index] = true;
           if (TRACE > 0)
-            printf("----A: ACK %d is for packet in window, marked as ACKed\n", packet.acknum);
+            printf("----A: ACK %d is not a duplicate\n",packet.acknum);
           new_ACKs++;
 
           /* stop timer if this was the earliest unacknowledged packet */
@@ -138,7 +138,7 @@ void A_input(struct pkt packet)
       }
     }
     else if (TRACE > 0)
-      printf("----A: ACK %d received, but window is empty, ignore\n", packet.acknum);
+      printf ("----A: duplicate ACK received, do nothing!\n");
   }
   else 
     if (TRACE > 0)
@@ -151,14 +151,14 @@ void A_timerinterrupt(void)
   int i;
 
   if (TRACE > 0)
-    printf("----A: timer interrupt, checking for timeout\n");
+    printf("----A: time out,resend packets!\n");
 
   /* find the earliest unacknowledged packet */
   for (i = 0; i < windowcount; i++) {
     int buf_index = (windowfirst + i) % WINDOWSIZE;
     if (!acked[buf_index]) {
       if (TRACE > 0)
-        printf("---A: resending packet %d (timeout)\n", buffer[buf_index].seqnum);
+      printf ("---A: resending packet %d\n", (buffer[(windowfirst+i) % WINDOWSIZE]).seqnum);
       tolayer3(A, buffer[buf_index]);
       packets_resent++;
       /* restart timer for the next unacknowledged packet */
