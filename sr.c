@@ -226,6 +226,9 @@ void B_input(struct pkt packet)
                   (window_start > packet.seqnum && (packet.seqnum <= window_end || packet.seqnum < window_start)));
 
     if (in_window || below_window) {
+      /* Count all valid packets, including duplicates and retransmissions */
+      packets_received++;
+
       /* Calculate buffer index for in-window packets */
       buffer_index = -1;
       if (in_window) {
@@ -236,30 +239,15 @@ void B_input(struct pkt packet)
       if (in_window && buffer_index >= 0 && !received[buffer_index]) {
         rcv_buffer[buffer_index] = packet;
         received[buffer_index] = true;
-        packets_received++;
-        /*if (TRACE > 0)
-          printf("----B: stored packet %d in buffer[%d]\n", packet.seqnum, buffer_index);*/
-      } 
-      /*else if (in_window && received[buffer_index]) {
-        if (TRACE > 0)
-          printf("----B: packet %d already in buffer[%d], sending ACK\n", packet.seqnum, buffer_index);
-      } 
-      else if (below_window) {
-        if (TRACE > 0)
-          printf("----B: packet %d below window, sending ACK\n", packet.seqnuåm);
-      }*/
+      }
 
       /* Send ACK for this packet */
       sendpkt.acknum = packet.seqnum;
       sendpkt.checksum = ComputeChecksum(sendpkt);
-      /*if (TRACE > 0)
-        printf("----B: sending ACK %d\n", sendpkt.acknum);*/
       tolayer3(B, sendpkt);
 
       /* Deliver in-order packets to layer 5 and slide window */
       while (received[0] && rcv_buffer[0].seqnum == expectedseqnum) {
-        /*if (TRACE > 0)
-          printf("----B: delivering packet %d to layer 5\n", rcv_buffer[0].seqnum);*/
         tolayer5(B, rcv_buffer[0].payload);
         received[0] = false;
         expectedseqnum = (expectedseqnum + 1) % SEQSPACE;
@@ -271,17 +259,12 @@ void B_input(struct pkt packet)
         }
         rcv_buffer[WINDOWSIZE - 1].seqnum = NOTINUSE;
         received[WINDOWSIZE - 1] = false;
-
-        /*if (TRACE > 0)
-          printf("----B: window slid, new expectedseqnum=%d\n", expectedseqnum);*/
       }
     } 
     else {
       /* Packet is beyond window, send ACK for last in-order packet */
       sendpkt.acknum = (expectedseqnum - 1 + SEQSPACE) % SEQSPACE;
       sendpkt.checksum = ComputeChecksum(sendpkt);
-      /*if (TRACE > 0)
-        printf("----B: packet %d beyond window, sending ACK %d\n", packet.seqnum, sendpkt.acknum);*/
       tolayer3(B, sendpkt);
     }
   } 
