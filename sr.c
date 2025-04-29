@@ -63,7 +63,7 @@ void A_output(struct msg message)
   /* if not blocked waiting on ACK */
   if (windowcount < WINDOWSIZE) {
     if (TRACE > 1)
-      printf("----A: New message arrives, send window is not full, send new message to layer3!\n");
+      printf("----A: New message arrives, send window is not full, send new messge to layer3!\n");
 
     /* create packet */
     sendpkt.seqnum = A_nextseqnum;
@@ -107,7 +107,7 @@ void A_input(struct pkt packet)
   /* if received ACK is not corrupted */ 
   if (!IsCorrupted(packet)) {
     if (TRACE > 0)
-      printf("----A: uncorrupted ACK %d is received\n", packet.acknum);
+      printf("----A: uncorrupted ACK %d is received\n",packet.acknum);
     total_ACKs_received++;
 
     /* find the packet in the window */
@@ -142,7 +142,7 @@ void A_input(struct pkt packet)
   }
   else 
     if (TRACE > 0)
-      printf("----A: corrupted ACK is received, do nothing!\n");
+      printf ("----A: corrupted ACK is received, do nothing!\n");
 }
 
 /* called when A's timer goes off */
@@ -158,7 +158,7 @@ void A_timerinterrupt(void)
     int buf_index = (windowfirst + i) % WINDOWSIZE;
     if (!acked[buf_index]) {
       if (TRACE > 0)
-      printf ("---A: resending packet %d\n", (buffer[(windowfirst+i) % WINDOWSIZE]).seqnum);
+        printf ("---A: resending packet %d\n", (buffer[(windowfirst+i) % WINDOWSIZE]).seqnum);
       tolayer3(A, buffer[buf_index]);
       packets_resent++;
       /* restart timer for the next unacknowledged packet */
@@ -246,7 +246,7 @@ void B_input(struct pkt packet)
       } 
       else if (below_window) {
         if (TRACE > 0)
-          printf("----B: packet %d below window, sending ACK\n", packet.seqnum);
+          printf("----B: packet %d below window, sending ACK\n", packet.seqnuåm);
       }*/
 
       /* Send ACK for this packet */
