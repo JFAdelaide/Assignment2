@@ -190,7 +190,7 @@ void A_init(void)
 static struct pkt rcv_buffer[WINDOWSIZE]; /* buffer for out-of-order packets */
 static bool received[WINDOWSIZE];         /* tracks which packets are buffered */
 static int expectedseqnum;                /* the sequence number expected for in-order delivery */
-//static int B_nextseqnum;                  /* the sequence number for the next ACK packets sent by B */
+/* static int B_nextseqnum;                   the sequence number for the next ACK packets sent by B */
 
 /* called from layer 3, when a packet arrives for layer 4 at B */
 void B_input(struct pkt packet)
