@@ -233,6 +233,9 @@ void B_input(struct pkt packet)
       buffer_index = -1;
       if (in_window) {
         buffer_index = (packet.seqnum - window_start + SEQSPACE) % SEQSPACE;
+        if (buffer_index >= WINDOWSIZE) {
+          buffer_index = -1; /* Prevent invalid buffering */
+        }
       }
 
       /* Store packet if in window and not already received */
@@ -270,11 +273,13 @@ void B_input(struct pkt packet)
   } 
   else {
     /* Corrupted packet, send ACK for last in-order packet */
-    sendpkt.acknum = (expectedseqnum - 1 + SEQSPACE) % SEQSPACE;
-    sendpkt.checksum = ComputeChecksum(sendpkt);
     if (TRACE > 0)
       printf("----B: packet corrupted or not expected sequence number, resend ACK!\n");
-    tolayer3(B, sendpkt);
+    if (expectedseqnum > 0) {
+      sendpkt.acknum = (expectedseqnum - 1 + SEQSPACE) % SEQSPACE;
+      sendpkt.checksum = ComputeChecksum(sendpkt);
+      tolayer3(B, sendpkt);
+    }
   }
 }
 
