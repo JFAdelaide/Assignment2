@@ -222,8 +222,8 @@ void B_input(struct pkt packet)
       printf("----B: packet %d is correctly received, send ACK!\n",packet.seqnum);
 
     /* Check if packet is below the window (already delivered but needs ACK) */
-    below_window = ((window_start <= packet.seqnum && packet.seqnum < window_start) ||
-                  (window_start > packet.seqnum && (packet.seqnum <= window_end || packet.seqnum < window_start)));
+    below_window = (packet.seqnum < window_start && window_start - packet.seqnum <= SEQSPACE / 2) ||
+               (packet.seqnum > window_end && SEQSPACE - packet.seqnum + window_start <= SEQSPACE / 2);
 
     if (in_window || below_window) {
       /* Count all valid packets, including duplicates and retransmissions */
